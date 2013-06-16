@@ -60,6 +60,7 @@
 #include <asm/mach/pci.h>
 #include <asm/mach/time.h>
 
+#include "cm.h"
 #include "common.h"
 
 /* Base address to the AP system controller */
@@ -167,7 +168,7 @@ static int irq_suspend(void)
 static void irq_resume(void)
 {
 	/* disable all irq sources */
-	writel(-1, VA_CMIC_BASE + IRQ_ENABLE_CLEAR);
+	cm_clear_irqs();
 	writel(-1, VA_IC_BASE + IRQ_ENABLE_CLEAR);
 	writel(-1, VA_IC_BASE + FIQ_ENABLE_CLEAR);
 
@@ -471,8 +472,7 @@ static const struct of_device_id fpga_irq_of_match[] __initconst = {
 
 static void __init ap_init_irq_of(void)
 {
-	/* disable core module IRQs */
-	writel(0xffffffffU, VA_CMIC_BASE + IRQ_ENABLE_CLEAR);
+	cm_init();
 	of_irq_init(fpga_irq_of_match);
 	integrator_clk_init(false);
 }
