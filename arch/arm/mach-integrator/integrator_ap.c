@@ -65,6 +65,8 @@
 
 /* Base address to the AP system controller */
 void __iomem *ap_syscon_base;
+/* Base address to the external bus interface */
+static void __iomem *ebi_base;
 
 /*
  * All IO addresses are mapped onto VA 0xFFFx.xxxx, where x.xxxx
@@ -74,7 +76,6 @@ void __iomem *ap_syscon_base;
  * just for now).
  */
 #define VA_IC_BASE	__io_address(INTEGRATOR_IC_BASE)
-#define VA_EBI_BASE	__io_address(INTEGRATOR_EBI_BASE)
 #define VA_CMIC_BASE	__io_address(INTEGRATOR_HDR_IC)
 
 /*
@@ -86,7 +87,6 @@ void __iomem *ap_syscon_base;
  * ef000000			Cache flush
  * f1000000	10000000	Core module registers
  * f1100000	11000000	System controller registers
- * f1200000	12000000	EBI registers
  * f1300000	13000000	Counter/Timer
  * f1400000	14000000	Interrupt controller
  * f1600000	16000000	UART 0
@@ -99,11 +99,6 @@ static struct map_desc ap_io_desc[] __initdata __maybe_unused = {
 	{
 		.virtual	= IO_ADDRESS(INTEGRATOR_HDR_BASE),
 		.pfn		= __phys_to_pfn(INTEGRATOR_HDR_BASE),
-		.length		= SZ_4K,
-		.type		= MT_DEVICE
-	}, {
-		.virtual	= IO_ADDRESS(INTEGRATOR_EBI_BASE),
-		.pfn		= __phys_to_pfn(INTEGRATOR_EBI_BASE),
 		.length		= SZ_4K,
 		.type		= MT_DEVICE
 	}, {
@@ -196,9 +191,6 @@ device_initcall(irq_syscore_init);
 /*
  * Flash handling.
  */
-#define EBI_CSR1 (VA_EBI_BASE + INTEGRATOR_EBI_CSR1_OFFSET)
-#define EBI_LOCK (VA_EBI_BASE + INTEGRATOR_EBI_LOCK_OFFSET)
-
 static int ap_flash_init(struct platform_device *dev)
 {
 	u32 tmp;
@@ -206,13 +198,15 @@ static int ap_flash_init(struct platform_device *dev)
 	writel(INTEGRATOR_SC_CTRL_nFLVPPEN | INTEGRATOR_SC_CTRL_nFLWP,
 	       ap_syscon_base + INTEGRATOR_SC_CTRLC_OFFSET);
 
-	tmp = readl(EBI_CSR1) | INTEGRATOR_EBI_WRITE_ENABLE;
-	writel(tmp, EBI_CSR1);
+	tmp = readl(ebi_base + INTEGRATOR_EBI_CSR1_OFFSET) |
+		INTEGRATOR_EBI_WRITE_ENABLE;
+	writel(tmp, ebi_base + INTEGRATOR_EBI_CSR1_OFFSET);
 
-	if (!(readl(EBI_CSR1) & INTEGRATOR_EBI_WRITE_ENABLE)) {
-		writel(0xa05f, EBI_LOCK);
-		writel(tmp, EBI_CSR1);
-		writel(0, EBI_LOCK);
+	if (!(readl(ebi_base + INTEGRATOR_EBI_CSR1_OFFSET)
+	      & INTEGRATOR_EBI_WRITE_ENABLE)) {
+		writel(0xa05f, ebi_base + INTEGRATOR_EBI_LOCK_OFFSET);
+		writel(tmp, ebi_base + INTEGRATOR_EBI_CSR1_OFFSET);
+		writel(0, ebi_base + INTEGRATOR_EBI_LOCK_OFFSET);
 	}
 	return 0;
 }
@@ -224,13 +218,15 @@ static void ap_flash_exit(struct platform_device *dev)
 	writel(INTEGRATOR_SC_CTRL_nFLVPPEN | INTEGRATOR_SC_CTRL_nFLWP,
 	       ap_syscon_base + INTEGRATOR_SC_CTRLC_OFFSET);
 
-	tmp = readl(EBI_CSR1) & ~INTEGRATOR_EBI_WRITE_ENABLE;
-	writel(tmp, EBI_CSR1);
+	tmp = readl(ebi_base + INTEGRATOR_EBI_CSR1_OFFSET) &
+		~INTEGRATOR_EBI_WRITE_ENABLE;
+	writel(tmp, ebi_base + INTEGRATOR_EBI_CSR1_OFFSET);
 
-	if (readl(EBI_CSR1) & INTEGRATOR_EBI_WRITE_ENABLE) {
-		writel(0xa05f, EBI_LOCK);
-		writel(tmp, EBI_CSR1);
-		writel(0, EBI_LOCK);
+	if (readl(ebi_base + INTEGRATOR_EBI_CSR1_OFFSET) &
+	    INTEGRATOR_EBI_WRITE_ENABLE) {
+		writel(0xa05f, ebi_base + INTEGRATOR_EBI_LOCK_OFFSET);
+		writel(tmp, ebi_base + INTEGRATOR_EBI_CSR1_OFFSET);
+		writel(0, ebi_base + INTEGRATOR_EBI_LOCK_OFFSET);
 	}
 }
 
@@ -499,11 +495,17 @@ static const struct of_device_id ap_syscon_match[] = {
 	{ },
 };
 
+static const struct of_device_id ebi_match[] = {
+	{ .compatible = "arm,external-bus-interface"},
+	{ },
+};
+
 static void __init ap_init_of(void)
 {
 	unsigned long sc_dec;
 	struct device_node *root;
 	struct device_node *syscon;
+	struct device_node *ebi;
 	struct device *parent;
 	struct soc_device *soc_dev;
 	struct soc_device_attribute *soc_dev_attr;
@@ -519,9 +521,15 @@ static void __init ap_init_of(void)
 	syscon = of_find_matching_node(root, ap_syscon_match);
 	if (!syscon)
 		return;
+	ebi = of_find_matching_node(root, ebi_match);
+	if (!ebi)
+		return;
 
 	ap_syscon_base = of_iomap(syscon, 0);
 	if (!ap_syscon_base)
+		return;
+	ebi_base = of_iomap(ebi, 0);
+	if (!ebi_base)
 		return;
 
 	ap_sc_id = readl(ap_syscon_base);

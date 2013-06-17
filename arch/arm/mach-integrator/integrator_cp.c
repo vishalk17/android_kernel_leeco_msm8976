@@ -67,7 +67,6 @@ static void __iomem *intcp_con_base;
  * Logical      Physical
  * f1000000	10000000	Core module registers
  * f1100000	11000000	System controller registers
- * f1200000	12000000	EBI registers
  * f1300000	13000000	Counter/Timer
  * f1400000	14000000	Interrupt controller
  * f1600000	16000000	UART 0
@@ -82,11 +81,6 @@ static struct map_desc intcp_io_desc[] __initdata __maybe_unused = {
 	{
 		.virtual	= IO_ADDRESS(INTEGRATOR_HDR_BASE),
 		.pfn		= __phys_to_pfn(INTEGRATOR_HDR_BASE),
-		.length		= SZ_4K,
-		.type		= MT_DEVICE
-	}, {
-		.virtual	= IO_ADDRESS(INTEGRATOR_EBI_BASE),
-		.pfn		= __phys_to_pfn(INTEGRATOR_EBI_BASE),
 		.length		= SZ_4K,
 		.type		= MT_DEVICE
 	}, {
