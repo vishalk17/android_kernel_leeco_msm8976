@@ -43,6 +43,7 @@ struct oz_serial_ctx {
  */
 static struct oz_cdev g_cdev;
 static struct class *g_oz_class;
+
 /*------------------------------------------------------------------------------
  * Context: process and softirq
  */
@@ -57,6 +58,7 @@ static struct oz_serial_ctx *oz_cdev_claim_ctx(struct oz_pd *pd)
 	spin_unlock_bh(&pd->app_lock[OZ_APPID_SERIAL-1]);
 	return ctx;
 }
+
 /*------------------------------------------------------------------------------
  * Context: softirq or process
  */
@@ -67,6 +69,7 @@ static void oz_cdev_release_ctx(struct oz_serial_ctx *ctx)
 		kfree(ctx);
 	}
 }
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -79,6 +82,7 @@ static int oz_cdev_open(struct inode *inode, struct file *filp)
 	filp->private_data = dev;
 	return 0;
 }
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -86,6 +90,7 @@ static int oz_cdev_release(struct inode *inode, struct file *filp)
 {
 	return 0;
 }
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -138,6 +143,7 @@ out2:
 	oz_pd_put(pd);
 	return count;
 }
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -198,6 +204,7 @@ out:
 	oz_pd_put(pd);
 	return count;
 }
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -232,6 +239,7 @@ static int oz_set_active_pd(const u8 *addr)
 	}
 	return rc;
 }
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -299,6 +307,7 @@ static long oz_cdev_ioctl(struct file *filp, unsigned int cmd,
 	}
 	return rc;
 }
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -322,6 +331,7 @@ static unsigned int oz_cdev_poll(struct file *filp, poll_table *wait)
 		poll_wait(filp, &dev->rdq, wait);
 	return ret;
 }
+
 /*------------------------------------------------------------------------------
  */
 static const struct file_operations oz_fops = {
@@ -333,6 +343,7 @@ static const struct file_operations oz_fops = {
 	.unlocked_ioctl = oz_cdev_ioctl,
 	.poll =		oz_cdev_poll
 };
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -377,6 +388,7 @@ unregister:
 	unregister_chrdev_region(g_cdev.devnum, 1);
 	return err;
 }
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -390,6 +402,7 @@ int oz_cdev_deregister(void)
 	}
 	return 0;
 }
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -398,6 +411,7 @@ int oz_cdev_init(void)
 	oz_app_enable(OZ_APPID_SERIAL, 1);
 	return 0;
 }
+
 /*------------------------------------------------------------------------------
  * Context: process
  */
@@ -405,6 +419,7 @@ void oz_cdev_term(void)
 {
 	oz_app_enable(OZ_APPID_SERIAL, 0);
 }
+
 /*------------------------------------------------------------------------------
  * Context: softirq-serialized
  */
@@ -442,6 +457,7 @@ int oz_cdev_start(struct oz_pd *pd, int resume)
 	oz_dbg(ON, "Serial service started\n");
 	return 0;
 }
+
 /*------------------------------------------------------------------------------
  * Context: softirq or process
  */
@@ -471,6 +487,7 @@ void oz_cdev_stop(struct oz_pd *pd, int pause)
 	}
 	oz_dbg(ON, "Serial service stopped\n");
 }
+
 /*------------------------------------------------------------------------------
  * Context: softirq-serialized
  */
