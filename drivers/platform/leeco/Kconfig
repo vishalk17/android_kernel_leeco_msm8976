@@ -1,0 +1,24 @@
+# Configs to select LeEco msm8916 family devices
+
+config MACH_LEECO
+	bool "LeEco device"
+	depends on ARCH_MSM8916
+	help
+	  Support for LeEco products
+
+config MACH_LEECO_MSM8916
+	bool "LeEco MSM8916 family"
+	depends on MACH_LEECO
+	help
+	  Support for LeEco boards using the MSM8916 chipset family
+
+menu "LeEco board selection"
+	depends on MACH_LEECO_MSM8916
+
+config MACH_LEECO_S2
+	bool "S2 boards"
+	depends on MACH_LEECO_MSM8916
+	help
+	  Support for LeEco s2
+
+endmenu
