@@ -1589,6 +1589,13 @@ enum nl80211_commands {
  *
  * @NL80211_ATTR_MAC_MASK: MAC address mask
  *
+ * @NL80211_ATTR_EXT_FEATURES: extended feature flags contained in a byte
+ *	array. The feature flags are identified by their bit index (see &enum
+ *	nl80211_ext_feature_index). The bit index is ordered starting at the
+ *	least-significant bit of the first byte in the array, ie. bit index 0
+ *	is located at bit 0 of byte 0. bit index 25 would be located at bit 1
+ *	of byte 3 (u8 array).
+ *
  * @NL80211_ATTR_MAX: highest attribute number currently defined
  * @__NL80211_ATTR_AFTER_LAST: internal use
  */
@@ -1943,6 +1950,8 @@ enum nl80211_attrs {
 	NL80211_ATTR_ADMITTED_TIME,
 
 	NL80211_ATTR_SMPS_MODE,
+
+	NL80211_ATTR_EXT_FEATURES,
 
 	NL80211_ATTR_OPER_CLASS,
 
